@@ -48,3 +48,36 @@ streamlit run scripts/app1-input.py
 - 置換対象がテンプレート内に必ず存在することを事前に確認してください。
 - 完全一致／部分一致の検索方式を切り替え可能です。
 - 一致箇所が複数ある場合はすべて置換されます。
+
+## 8. Abaqus 解析 (②) と結果抽出 (③) の連続実行
+`workflow.py` で、すでに生成済みの `.inp` ファイルに対して ② の解析と ③ の結果抽出を一括実行できます。従来通り ② と ③ は個別でも実行可能です。解析対象となる `.inp` の一覧は一括実行の開始時に一度だけ確定するため、解析完了後にファイル構成が変わっても同じ対象に対して抽出が走ります。
+
+### 8.1 Streamlit から ②→③ をまとめて実行する
+ボタンひとつで ② と ③ を連続実行したい場合は、以下の Streamlit アプリを利用できます（① は含みません）。
+
+```bash
+streamlit run workflow_app.py
+```
+
+1. `.inp` フォルダと抽出結果の保存先フォルダを入力します。
+2. 対象にする `.inp` をチェックボックスで選択します（初期状態では全選択）。
+3. 解析コマンドと抽出コマンドのテンプレートを確認・編集します。
+4. 「② 解析のみ実行」「③ 抽出のみ実行」「②→③ 一括実行」のいずれかのボタンを押します。
+
+### 8.2 CLI で ②→③ をまとめて実行する
+フォルダ内のすべての `.inp` を解析してから抽出する場合:
+
+```bash
+python workflow.py --jobs-dir jobs --results-dir extracts run-and-extract \
+  --abaqus-template "abaqus job={job_name} input={inp_path}" \
+  --extract-template "python extract_results.py --odb {odb_path} --out {results_dir}"
+```
+
+特定の入力 (`case1.inp`, `case2.inp`) だけを対象にする場合は `--targets` を指定してください:
+
+```bash
+python workflow.py --jobs-dir jobs --results-dir extracts \
+  --targets case1 case2 run-and-extract
+```
+
+解析だけ、または抽出だけを行いたい場合はそれぞれ `run`、`extract` サブコマンドを使用します。
